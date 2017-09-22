@@ -1,14 +1,22 @@
 package com.gurudatt.flink;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.util.EntityUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 /**
  * This plugin is used to upload the job jar to the Apache flink jopb
@@ -37,22 +45,37 @@ public class FlinkJobUploadMojo extends AbstractMojo {
     private String JOB_RUN_URL_FRAGMENT="/run";
 
     public void execute() throws MojoExecutionException, MojoFailureException {
-       getLog().info("flink-upload-plugin: "+jarPath);
+        getLog().info("flink-upload-plugin: "+jarPath);
 
-       File fileToUpload = new File(jarPath);
-       String requestUrl = "http://"+jobmanagerip+JARS_BASE_URL+JOB_UPLOAD_URL_FRAGMENT;
-        System.out.println(requestUrl);
+
+        String requestUrl = "http://"+jobmanagerip+JARS_BASE_URL+JOB_UPLOAD_URL_FRAGMENT;
+
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+
+        HttpPost uploadFile = new HttpPost(requestUrl);
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        File fileToUpload = new File(jarPath);
+
+        builder.addBinaryBody("jarfile",fileToUpload);
+
+        HttpEntity multipart = builder.build();
+
+        uploadFile.setEntity(multipart);
+        CloseableHttpResponse response = null;
         try {
-            MultipartUtility multipartUtility = new MultipartUtility(requestUrl,"UTF-8");
-            multipartUtility.addFilePart("jarfile",fileToUpload);
-            List<String> response = multipartUtility.finish();
-            System.out.println("SERVER REPLIED: ");
+            response = httpClient.execute(uploadFile);
+            response.setHeader(new BasicHeader("Expect",""));
 
-            for (String line: response){
-                System.out.println(line);
-            }
         } catch (IOException e) {
-            System.err.println(e);
+            e.printStackTrace();
+        }
+
+        try {
+            String bodyAsString = EntityUtils.toString(response.getEntity(),"UTF-8");
+            JSONObject jsonObject = new JSONObject(bodyAsString);
+            System.out.println(jsonObject.get("filename"));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
     }
