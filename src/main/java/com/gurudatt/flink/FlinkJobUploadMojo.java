@@ -18,6 +18,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 
+
 /**
  * This plugin is used to upload the job jar to the Apache flink jopb
  */
@@ -30,13 +31,13 @@ public class FlinkJobUploadMojo extends AbstractMojo {
     @Parameter( property = "runjob.allowNonRestoredState" ,defaultValue = "false")
     private Boolean allowNonRestoredState;
     @Parameter (property = "runjob.entryClass")
-    private String entryClass;
+    private String entryClass = "";
     @Parameter(property = "runjob.parallelism", defaultValue = "1")
     private Integer parallelism;
     @Parameter(property = "runjob.programArgs")
-    private String programArgs;
+    private String programArgs = "";
     @Parameter(property = "runjob.savepointPath")
-    private String savePointPath;
+    private String savePointPath = "";
     @Parameter(property = "runjob.jarPath",required = true)
     private String jarPath;
 
@@ -48,37 +49,112 @@ public class FlinkJobUploadMojo extends AbstractMojo {
         getLog().info("flink-upload-plugin: "+jarPath);
 
 
-        String requestUrl = "http://"+jobmanagerip+JARS_BASE_URL+JOB_UPLOAD_URL_FRAGMENT;
+        String jobUploadUrl = "http://"+jobmanagerip+JARS_BASE_URL+JOB_UPLOAD_URL_FRAGMENT;
+        getLog().info("JOB_UPLOAD_URL: "+jobUploadUrl);
+
+        JSONObject uploadResponse = uploadJob(jobUploadUrl,jarPath);
+        System.out.println(uploadResponse.getString("status"));
+        System.out.println(uploadResponse.getString("filename"));
+        System.out.println(uploadResponse.has("error"));
+        if(uploadResponse != null
+                && !uploadResponse.has("error")
+                && uploadResponse.getString("status").equals("success")) {
+
+            String uploadedJarName = uploadResponse.getString("filename");
+
+            String runJobUrl = "http://" +jobmanagerip + JARS_BASE_URL + "/" + uploadedJarName + JOB_RUN_URL_FRAGMENT
+                    +"?allowNonRestoredState="+allowNonRestoredState
+                    +"&entry-class="+entryClass
+                    +"&parallelism="+parallelism
+                    +"&program-args="+programArgs
+                    +"&savepointPath="+savePointPath;
+
+            getLog().info("RUN_JOB_URL: "+runJobUrl);
+            JSONObject runResponse = runJob(runJobUrl);
+            if(runResponse != null && !runResponse.has("error")){
+                getLog().info("JOB_ID: "+runResponse.getString("jobid"));
+            }else{
+                throw new MojoFailureException("RunJobResponseFailure");
+            }
+
+
+        } else {
+            throw new MojoFailureException("UploadJobResponseFailure");
+        }
+
+
+
+    }
+
+    /**
+     *
+     * @param requestUrl - JobManager job upload url
+     * @param jarPath - fat-jar complete path
+     * @return JSONObject
+     * @throws MojoFailureException
+     */
+
+    private JSONObject uploadJob(String requestUrl, String jarPath) throws MojoFailureException {
 
         CloseableHttpClient httpClient = HttpClients.createDefault();
-
-        HttpPost uploadFile = new HttpPost(requestUrl);
-        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
         File fileToUpload = new File(jarPath);
+        HttpPost uploadFileUrl = new HttpPost(requestUrl);
 
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
         builder.addBinaryBody("jarfile",fileToUpload);
 
         HttpEntity multipart = builder.build();
 
-        uploadFile.setEntity(multipart);
+        JSONObject jobUploadResponse = null;
+
+
+
+        uploadFileUrl.setEntity(multipart);
         CloseableHttpResponse response = null;
         try {
-            response = httpClient.execute(uploadFile);
+            response = httpClient.execute(uploadFileUrl);
             response.setHeader(new BasicHeader("Expect",""));
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        try {
             String bodyAsString = EntityUtils.toString(response.getEntity(),"UTF-8");
-            JSONObject jsonObject = new JSONObject(bodyAsString);
-            System.out.println(jsonObject.get("filename"));
+            jobUploadResponse = new JSONObject(bodyAsString);
+            getLog().info(bodyAsString);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new MojoFailureException("UploadJobMethod",e);
+        }finally {
+            try {
+                response.close();
+            } catch (IOException e) {
+                throw new MojoFailureException("UploadJobMethod",e);
+            }
         }
 
+        return jobUploadResponse;
     }
 
+    private JSONObject runJob(String uploadedJarUrl) throws MojoFailureException {
+
+        JSONObject runJobResponse = null;
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpPost runJobUrl = new HttpPost(uploadedJarUrl);
+
+        CloseableHttpResponse response = null;
+
+        try {
+            response = httpClient.execute(runJobUrl);
+            String bodyAsString = EntityUtils.toString(response.getEntity(),"UTF-8");
+            runJobResponse = new JSONObject(bodyAsString);
+            getLog().info(bodyAsString);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new MojoFailureException("RunJobMethod",e);
+        }finally {
+            try {
+                response.close();
+            } catch (IOException e) {
+                throw new MojoFailureException("RunJobMethod",e);
+            }
+        }
+
+        return runJobResponse;
+    }
 
 }
