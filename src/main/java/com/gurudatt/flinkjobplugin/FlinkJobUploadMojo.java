@@ -1,4 +1,4 @@
-package com.gurudatt.flink;
+package com.gurudatt.flinkjobplugin;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -53,9 +53,6 @@ public class FlinkJobUploadMojo extends AbstractMojo {
         getLog().info("JOB_UPLOAD_URL: "+jobUploadUrl);
 
         JSONObject uploadResponse = uploadJob(jobUploadUrl,jarPath);
-        System.out.println(uploadResponse.getString("status"));
-        System.out.println(uploadResponse.getString("filename"));
-        System.out.println(uploadResponse.has("error"));
         if(uploadResponse != null
                 && !uploadResponse.has("error")
                 && uploadResponse.getString("status").equals("success")) {
@@ -122,6 +119,7 @@ public class FlinkJobUploadMojo extends AbstractMojo {
         }finally {
             try {
                 response.close();
+                httpClient.close();
             } catch (IOException e) {
                 throw new MojoFailureException("UploadJobMethod",e);
             }
@@ -149,6 +147,7 @@ public class FlinkJobUploadMojo extends AbstractMojo {
         }finally {
             try {
                 response.close();
+                httpClient.close();
             } catch (IOException e) {
                 throw new MojoFailureException("RunJobMethod",e);
             }
