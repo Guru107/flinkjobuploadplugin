@@ -1,4 +1,4 @@
-package com.gurudatt.flinkjobplugin;
+package com.github.guru107;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
