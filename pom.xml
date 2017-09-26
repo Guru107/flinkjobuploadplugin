@@ -6,19 +6,39 @@
 
     <groupId>com.github.guru107</groupId>
     <artifactId>flinkjobupload-maven-plugin</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <packaging>maven-plugin</packaging>
     <name>Apache Flink Job Upload Plugin</name>
+    <description>This plugin can be used to automate job upload to flink cluster by specifying flink job upload configuration in the configuration</description>
+    <url>https://github.com/Guru107/flinkjobuploadplugin</url>
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://mit-license.org/</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <id>guru107</id>
+            <name>Gurudatt Kulkarni</name>
+            <email>guru107@gmail.com</email>
+            <roles>
+                <role>Developer</role>
+            </roles>
+        </developer>
+    </developers>
+    <scm>
+        <url>https://github.com/Guru107/flinkjobuploadplugin</url>
+        <connection>scm:git:git://github.com/Guru107/flinkjobuploadplugin.git</connection>
+        <developerConnection>scm:git:git@github.com:Guru107/flinkjobuploadplugin.git</developerConnection>
+    </scm>
 
     <distributionManagement>
         <snapshotRepository>
             <id>ossrh</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
     </distributionManagement>
 
     <dependencies>
@@ -100,17 +120,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.8</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <serverId>ossrh</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                </configuration>
             </plugin>
         </plugins>
     </build>
