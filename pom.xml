@@ -6,7 +6,7 @@
 
     <groupId>com.github.guru107</groupId>
     <artifactId>flinkjobupload-maven-plugin</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.1</version>
     <packaging>maven-plugin</packaging>
     <name>Apache Flink Job Upload Plugin</name>
     <description>This plugin can be used to automate job upload to flink cluster by specifying flink job upload configuration in the configuration</description>
