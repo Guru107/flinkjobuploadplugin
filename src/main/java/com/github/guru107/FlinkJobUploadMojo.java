@@ -6,6 +6,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.apache.maven.plugin.AbstractMojo;
@@ -93,7 +94,8 @@ public class FlinkJobUploadMojo extends AbstractMojo {
 
     private JSONObject uploadJob(String requestUrl, String jarPath) throws MojoFailureException {
 
-        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpClient httpClient = HttpClients.custom().setRedirectStrategy(new LaxRedirectStrategy()).build();
+
         File fileToUpload = new File(jarPath);
         HttpPost uploadFileUrl = new HttpPost(requestUrl);
 
@@ -131,7 +133,7 @@ public class FlinkJobUploadMojo extends AbstractMojo {
     private JSONObject runJob(String uploadedJarUrl) throws MojoFailureException {
 
         JSONObject runJobResponse = null;
-        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpClient httpClient = HttpClients.custom().setRedirectStrategy(new LaxRedirectStrategy()).build();
         HttpPost runJobUrl = new HttpPost(uploadedJarUrl);
 
         CloseableHttpResponse response = null;
