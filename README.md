@@ -1,4 +1,6 @@
 # flinkjobuploadplugin
+This will automate the task of uploading the fat jar to flink cluster right from your IDE (If you have proper access to the cluster).
+
 This maven plugin can be used to automate the process of job running. 
 Just add this in `pom.xml` file
 
